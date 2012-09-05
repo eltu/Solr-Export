@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<project default="dist" name="SolrExport">
+
+	<!-- Define the properties uses in the script -->
+	<property name="project.name" value="SolrExport" />
+	<property name="src.dir" value="${basedir}/src" />
+	<property name="conf.dir" value="${basedir}/conf" />
+	<property name="lib.dir" value="${basedir}/lib" />
+	<property name="classes.dir" value="${basedir}/classes" />
+	<property name="bin.dir" value="${basedir}/bin" />
+	<property name="dist.dir" value="${basedir}/dist" />
+
+	<!-- Clear directories -->
+	<target name="clean" description="Clear the directories">
+		<delete dir="${classes.dir}" />
+		<delete dir="${dist.dir}" />
+	</target>
+
+	<!-- Create directories -->
+	<target name="init" depends="clean" description="Create the directories">
+		<mkdir dir="${classes.dir}" />
+		<mkdir dir="${dist.dir}" />
+	</target>
+
+	<!-- Compile the classes -->
+	<target name="compile" depends="init">
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" source="1.6" target="1.6">
+			<classpath>
+				<fileset dir="${lib.dir}">
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<!-- create a property containing all .jar files, prefix lib/, and seperated with a space -->
+		<pathconvert property="libs.project" pathsep=" ">
+			<mapper>
+				<chainedmapper>
+					<!-- remove absolute path -->
+					<flattenmapper />
+					<!-- add lib/ prefix -->
+					<globmapper from="*" to="lib/*" />
+				</chainedmapper>
+			</mapper>
+			<path>
+				<fileset dir="${lib.dir}">
+					<include name="**/*.jar" />
+				</fileset>
+			</path>
+		</pathconvert>
+		<jar destfile="${dist.dir}/${project.name}.jar">
+			<fileset dir="${classes.dir}" />
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Main-Class" value="br.com.craic.solr.export.main.Runner" />
+				<attribute name="Class-Path" value="${libs.project}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="dist" depends="jar">		
+		<!-- contains all library dependencies -->				
+		<mkdir dir="${dist.dir}/bin" />
+		<mkdir dir="${dist.dir}/conf" />
+		<mkdir dir="${dist.dir}/lib" />
+		<mkdir dir="${dist.dir}/log" />
+		<copy file="${bin.dir}/solrexport.cmd" tofile="${dist.dir}/bin/solrexport.cmd"/>
+		<copy todir="${dist.dir}/conf" filtering="off">
+			<fileset dir="${conf.dir}">
+				<exclude name="**/solrexport.properties"/>
+			</fileset>			
+		</copy>
+		<copy todir="${dist.dir}/lib" filtering="off">
+			<fileset dir="${lib.dir}" includes="**/*.jar" />
+		</copy>
+	</target>
+</project>

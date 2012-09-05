@@ -1,0 +1,1 @@
+call java -jar ../SolrExport.jar
